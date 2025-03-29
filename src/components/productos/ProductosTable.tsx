@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useProductoStore } from "@/store/ProductoStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogDescription, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, List, X } from "lucide-react";
 import { ProductoDTO } from "@/types/producto";
-import AgregarCaracteristicaModal from "./AgregarCaracteristicaModal"; // Importar modal de características
+import { toast } from "sonner"
+import ModalAgregarCaracteristica from "./AgregarCaracteristicaModal";
 
 interface TablaProductosProps {
   idCatalogoSeleccionado: number | null;
@@ -14,13 +16,27 @@ interface TablaProductosProps {
 }
 
 const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaProductosProps) => {
-  const { productos, cargarProductosPorCatalogoYMarca, limpiarProductos, eliminarProducto, actualizarProducto } = useProductoStore();
-  
+  const {
+    productos,
+    cargarProductosPorCatalogoYMarca,
+    limpiarProductos,
+    eliminarProducto,
+    actualizarProducto,
+    agregarCaracteristicasAProducto,
+    eliminarCaracteristicaDeProducto
+  } = useProductoStore();
+
   const [busqueda, setBusqueda] = useState<string>("");
   const [productoEditando, setProductoEditando] = useState<ProductoDTO | null>(null);
   const [modalEdicionAbierto, setModalEdicionAbierto] = useState<boolean>(false);
   const [productoParaCaracteristica, setProductoParaCaracteristica] = useState<ProductoDTO | null>(null);
   const [modalCaracteristicaAbierto, setModalCaracteristicaAbierto] = useState<boolean>(false);
+  const [productoVerCaracteristicas, setProductoVerCaracteristicas] = useState<ProductoDTO | null>(null);
+  const [modalVerCaracteristicasAbierto, setModalVerCaracteristicasAbierto] = useState<boolean>(false);
+  const [productoAEliminar, setProductoAEliminar] = useState<ProductoDTO | null>(null);
+  const [dialogoEliminarAbierto, setDialogoEliminarAbierto] = useState<boolean>(false);
+  const [caracteristicaAEliminar, setCaracteristicaAEliminar] = useState<{ idProducto: number, idValorCaracteristica: number } | null>(null);
+  const [dialogoEliminarCaracteristicaAbierto, setDialogoEliminarCaracteristicaAbierto] = useState<boolean>(false);
 
   useEffect(() => {
     if (idCatalogoSeleccionado) {
@@ -55,6 +71,16 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
     setModalCaracteristicaAbierto(false);
   };
 
+  const abrirModalVerCaracteristicas = (producto: ProductoDTO) => {
+    setProductoVerCaracteristicas(producto);
+    setModalVerCaracteristicasAbierto(true);
+  };
+
+  const cerrarModalVerCaracteristicas = () => {
+    setProductoVerCaracteristicas(null);
+    setModalVerCaracteristicasAbierto(false);
+  };
+
   const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (productoEditando) {
@@ -72,8 +98,52 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
     }
 
     await actualizarProducto(productoEditando.idProducto, productoEditando);
-
     cerrarModalEdicion();
+  };
+
+  const abrirDialogoEliminarCaracteristica = (idProducto: number, idValorCaracteristica: number) => {
+    setCaracteristicaAEliminar({ idProducto, idValorCaracteristica });
+    setDialogoEliminarCaracteristicaAbierto(true);
+  };
+
+  const cerrarDialogoEliminarCaracteristica = () => {
+    setDialogoEliminarCaracteristicaAbierto(false);
+    setCaracteristicaAEliminar(null);
+  };
+
+  const confirmarEliminarCaracteristica = async () => {
+    if (caracteristicaAEliminar) {
+      await eliminarCaracteristicaDeProducto(caracteristicaAEliminar.idProducto, caracteristicaAEliminar.idValorCaracteristica);
+
+      if (productoVerCaracteristicas) {
+        setProductoVerCaracteristicas({
+          ...productoVerCaracteristicas,
+          caracteristicas: productoVerCaracteristicas.caracteristicas?.filter(
+            (c) => c.idValorCaracteristica !== caracteristicaAEliminar.idValorCaracteristica
+          ),
+        });
+      }
+      toast.success("Característica eliminada correctamente");
+    }
+    cerrarDialogoEliminarCaracteristica();
+  };
+
+  const abrirDialogoEliminar = (producto: ProductoDTO) => {
+    setProductoAEliminar(producto);
+    setDialogoEliminarAbierto(true);
+  };
+
+  const cerrarDialogoEliminar = () => {
+    setDialogoEliminarAbierto(false);
+    setProductoAEliminar(null);
+  };
+
+  const confirmarEliminarProducto = async () => {
+    if (productoAEliminar?.idProducto) {
+      await eliminarProducto(productoAEliminar.idProducto);
+      toast.success("Producto eliminado correctamente");
+    }
+    cerrarDialogoEliminar();
   };
 
   return (
@@ -112,6 +182,9 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
                 <TableCell>{producto.estado ? "Activo" : "Inactivo"}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
+                    <Button variant="outline" size="icon" onClick={() => abrirModalVerCaracteristicas(producto)}>
+                      <List className="h-4 w-4" />
+                    </Button>
                     <Button variant="outline" size="icon" onClick={() => abrirModalAgregarCaracteristica(producto)}>
                       ➕
                     </Button>
@@ -121,11 +194,7 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => {
-                        if (producto.idProducto !== undefined) {
-                          eliminarProducto(producto.idProducto);
-                        }
-                      }}
+                      onClick={() => abrirDialogoEliminar(producto)}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -176,12 +245,105 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
 
       {/* MODAL DE AGREGAR CARACTERÍSTICA */}
       {productoParaCaracteristica && (
-        <AgregarCaracteristicaModal
+        <ModalAgregarCaracteristica
           producto={productoParaCaracteristica}
           isOpen={modalCaracteristicaAbierto}
           onClose={cerrarModalAgregarCaracteristica}
+          onAgregarCaracteristica={(caracteristica, valor) => {
+            console.log("Agregando característica:", caracteristica);
+            console.log("Agregando valor:", valor);
+
+            if (productoParaCaracteristica?.idProducto) {
+              agregarCaracteristicasAProducto(
+                productoParaCaracteristica.idProducto,
+                [valor.idValorCaracteristica]
+              );
+              cerrarModalAgregarCaracteristica();
+            }
+          }}
         />
       )}
+
+      <Dialog open={modalVerCaracteristicasAbierto} onOpenChange={cerrarModalVerCaracteristicas}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Características del Producto</DialogTitle>
+            <DialogDescription>
+              {productoVerCaracteristicas?.nombreProducto} ({productoVerCaracteristicas?.codigoProducto})
+            </DialogDescription>
+          </DialogHeader>
+          {productoVerCaracteristicas?.caracteristicas &&
+            productoVerCaracteristicas.caracteristicas.length > 0 ? (
+              <div className="space-y-2">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Característica</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {productoVerCaracteristicas.caracteristicas.map((valorCaract) => (
+                      <TableRow key={valorCaract.idValorCaracteristica}>
+                        <TableCell>{valorCaract.nombreCaracteristica}</TableCell>
+                        <TableCell>{valorCaract.valor}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => abrirDialogoEliminarCaracteristica(
+                              productoVerCaracteristicas.idProducto!,
+                              valorCaract.idValorCaracteristica!
+                            )}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-center py-2 text-gray-500">Este producto no tiene características asignadas.</p>
+            )}
+          <DialogFooter>
+            <Button onClick={cerrarModalVerCaracteristicas}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={dialogoEliminarCaracteristicaAbierto} onOpenChange={cerrarDialogoEliminarCaracteristica}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar Característica?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar esta característica? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cerrarDialogoEliminarCaracteristica}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarEliminarCaracteristica}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
+      <AlertDialog open={dialogoEliminarAbierto} onOpenChange={cerrarDialogoEliminar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cerrarDialogoEliminar}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarEliminarProducto}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

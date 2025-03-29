@@ -15,7 +15,7 @@ export default function GestionValores() {
   const [caracteristicaSeleccionada, setCaracteristicaSeleccionada] = useState<{ idCaracteristica: number; nombreCaracteristica: string } | null>(null);
   const [nombreValor, setNombreValor] = useState("");
   const [open, setOpen] = useState(false);
-  const [expandido, setExpandido] = useState<{ [key: number]: boolean }>({});
+  const [mostrarTodos, setMostrarTodos] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     obtenerCaracteristicas();
@@ -57,7 +57,7 @@ export default function GestionValores() {
                       onSelect={() => {
                         setCaracteristicaSeleccionada({
                           idCaracteristica: caracteristica.idCaracteristica,
-                          nombreCaracteristica: caracteristica.nombreCaracteristica ?? "",
+                          nombreCaracteristica: caracteristica.nombreCaracteristica ?? "", // Evita null en el nombre
                         });
                         setOpen(false);
                       }}
@@ -93,28 +93,27 @@ export default function GestionValores() {
                 const valoresFiltrados = valores.filter(
                   (valor) => valor.idCaracteristica === caracteristica.idCaracteristica
                 );
-
-                const mostrarTodos = expandido[caracteristica.idCaracteristica];
-                const valoresMostrados = mostrarTodos ? valoresFiltrados : valoresFiltrados.slice(0, 2);
+                const mostrar = mostrarTodos[caracteristica.idCaracteristica];
+                const valoresMostrados = mostrar ? valoresFiltrados : valoresFiltrados.slice(0, 2);
 
                 return (
                   <div key={caracteristica.idCaracteristica}>
                     <h3 className="text-lg font-semibold mb-2">{caracteristica.nombreCaracteristica}</h3>
-                    <Table>
+                    <Table className="table-fixed w-full">
                       <TableHeader>
                         <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Acciones</TableHead>
+                          <TableHead className="w-1/12 text-center">ID</TableHead>
+                          <TableHead className="w-1/6 text-center">Nombre</TableHead>
+                          <TableHead className="w-1/4 text-center">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {valoresMostrados.length > 0 ? (
                           valoresMostrados.map((valor) => (
                             <TableRow key={valor.idValorCaracteristica}>
-                              <TableCell>{valor.idValorCaracteristica}</TableCell>
-                              <TableCell>{valor.valor}</TableCell>
-                              <TableCell>
+                              <TableCell className="text-center whitespace-nowrap">{valor.idValorCaracteristica}</TableCell>
+                              <TableCell className="text-center whitespace-nowrap">{valor.valor}</TableCell>
+                              <TableCell className="text-center">
                                 <Button
                                   variant="destructive"
                                   size="icon"
@@ -128,26 +127,21 @@ export default function GestionValores() {
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center text-gray-500">
-                              No hay valores registrados.
-                            </TableCell>
+                            <TableCell colSpan={3} className="text-center text-gray-500">No hay valores registrados.</TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
-
                     {valoresFiltrados.length > 2 && (
                       <Button
                         variant="link"
                         className="mt-2"
-                        onClick={() =>
-                          setExpandido((prev) => ({
-                            ...prev,
-                            [caracteristica.idCaracteristica]: !mostrarTodos,
-                          }))
-                        }
+                        onClick={() => setMostrarTodos((prev) => ({
+                          ...prev,
+                          [caracteristica.idCaracteristica]: !mostrar,
+                        }))}
                       >
-                        {mostrarTodos ? "Ver menos" : "Ver más"}
+                        {mostrar ? "Ver menos" : "Ver más"}
                       </Button>
                     )}
                   </div>

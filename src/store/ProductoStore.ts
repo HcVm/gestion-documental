@@ -12,7 +12,8 @@ interface ProductoState {
   eliminarProducto: (id: number) => Promise<void>;
   seleccionarProducto: (producto: ProductoDTO | null) => void;
   actualizarProducto: (idProducto: number, productoActualizado: ProductoDTO) => Promise<void>;
-
+  agregarCaracteristicasAProducto: (idProducto: number, idsCaracteristicas: number[]) => Promise<void>;
+  eliminarCaracteristicaDeProducto: (idProducto: number, idCaracteristica: number) => Promise<void>;
 }
 
 export const useProductoStore = create<ProductoState>((set) => ({
@@ -33,7 +34,7 @@ export const useProductoStore = create<ProductoState>((set) => ({
     set({ productos });
   },
 
-  async cargarProductosPorCatalogoYMarca(idCatalogo, idMarca) {
+  cargarProductosPorCatalogoYMarca: async (idCatalogo, idMarca) => {
     let productos = [];
     if (idMarca) {
       productos = await ProductoService.obtenerProductosPorCatalogoYMarca(idCatalogo, idMarca);
@@ -67,4 +68,33 @@ export const useProductoStore = create<ProductoState>((set) => ({
     }));
   },
 
+  agregarCaracteristicasAProducto: async (idProducto: number, idsCaracteristicas: number[]) => {
+    try {
+      console.log("🔍 Agregando características al producto ID:", idProducto, idsCaracteristicas);
+      const productoActualizado = await ProductoService.agregarCaracteristicasAProducto(idProducto, idsCaracteristicas);
+      console.log("✅ Producto actualizado:", productoActualizado);
+      set((state) => ({
+        productos: state.productos.map((p) =>
+          p.idProducto === idProducto ? productoActualizado : p
+        ),
+        productoSeleccionado: state.productoSeleccionado?.idProducto === idProducto ? productoActualizado : state.productoSeleccionado,
+      }));
+    } catch (error) {
+      console.error("❌ Error al agregar características al producto:", error);
+    }
+  },
+
+  eliminarCaracteristicaDeProducto: async (idProducto: number, idCaracteristica: number) => {
+    try {
+      const productoActualizado = await ProductoService.eliminarCaracteristicaDeProducto(idProducto, idCaracteristica);
+      set((state) => ({
+        productos: state.productos.map((p) =>
+          p.idProducto === idProducto ? productoActualizado : p
+        ),
+        productoSeleccionado: state.productoSeleccionado?.idProducto === idProducto ? productoActualizado : state.productoSeleccionado,
+      }));
+    } catch (error) {
+      console.error("Error al eliminar característica del producto:", error);
+    }
+  },
 }));

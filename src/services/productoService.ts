@@ -68,5 +68,21 @@ export const ProductoService = {
     });
     return response.data;
   },
-  
+
+  async agregarCaracteristicasAProducto(id: number, idsCaracteristicas: number[]): Promise<ProductoDTO> {
+    const token = getAuthToken();
+    const response = await axios.put<ProductoDTO>(`${API_URL}/${id}/caracteristicas`, idsCaracteristicas, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    return response.data;
+  },
+
+  async eliminarCaracteristicaDeProducto(idProducto: number, idCaracteristica: number): Promise<ProductoDTO> {
+    const token = getAuthToken();
+    const response = await axios.delete<ProductoDTO>(
+      `${API_URL}/${idProducto}/caracteristicas/${idCaracteristica}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
 };
