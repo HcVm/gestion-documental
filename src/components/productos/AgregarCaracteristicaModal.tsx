@@ -31,7 +31,7 @@ export default function ModalAgregarCaracteristica({ producto, isOpen, onClose, 
   useEffect(() => {
     obtenerCaracteristicas();
     obtenerValores();
-  }, []);
+  }, [obtenerCaracteristicas, obtenerValores]);
 
   const valoresFiltrados = caracteristicaSeleccionada
     ? valores.filter((valor) => valor.idCaracteristica === caracteristicaSeleccionada.idCaracteristica)
