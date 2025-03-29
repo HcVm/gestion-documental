@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogDescription, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Edit, Trash, List, X } from "lucide-react";
+import { Edit, Trash, List } from "lucide-react";
 import { ProductoDTO } from "@/types/producto";
 import { toast } from "sonner"
 import ModalAgregarCaracteristica from "./AgregarCaracteristicaModal";
