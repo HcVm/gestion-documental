@@ -9,6 +9,8 @@ import { Edit, Trash, List } from "lucide-react";
 import { ProductoDTO } from "@/types/producto";
 import { toast } from "sonner"
 import ModalAgregarCaracteristica from "./AgregarCaracteristicaModal";
+import FichaTecnicaPDF from "@/components/fichas/FichaTecnicaPDF";
+
 
 interface TablaProductosProps {
   idCatalogoSeleccionado: number | null;
@@ -37,6 +39,7 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
   const [dialogoEliminarAbierto, setDialogoEliminarAbierto] = useState<boolean>(false);
   const [caracteristicaAEliminar, setCaracteristicaAEliminar] = useState<{ idProducto: number, idValorCaracteristica: number } | null>(null);
   const [dialogoEliminarCaracteristicaAbierto, setDialogoEliminarCaracteristicaAbierto] = useState<boolean>(false);
+  
 
   useEffect(() => {
     if (idCatalogoSeleccionado) {
@@ -198,6 +201,7 @@ const TablaProductos = ({ idCatalogoSeleccionado, idMarcaSeleccionada }: TablaPr
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
+                    <FichaTecnicaPDF producto={producto} />
                   </div>
                 </TableCell>
               </TableRow>

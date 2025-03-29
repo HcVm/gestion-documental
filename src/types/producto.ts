@@ -19,7 +19,7 @@ export interface CatalogoElectronicoDTO {
   }
   
   export interface ProductoDTO {
-    idProducto?: number;
+    idProducto: number;
     codigoProducto: string;
     nombreProducto: string;
     descripcionProducto: string;
